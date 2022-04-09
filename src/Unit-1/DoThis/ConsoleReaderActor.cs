@@ -9,31 +9,41 @@ namespace WinTail
     /// </summary>
     class ConsoleReaderActor : UntypedActor
     {
+        public const string StartCommand = "start";
         public const string ExitCommand = "exit";
-        private IActorRef _consoleWriterActor;
-
-        public ConsoleReaderActor(IActorRef consoleWriterActor)
-        {
-            _consoleWriterActor = consoleWriterActor;
-        }
-
+        
         protected override void OnReceive(object message)
         {
-            var read = Console.ReadLine();
-            if (!string.IsNullOrEmpty(read) && String.Equals(read, ExitCommand, StringComparison.OrdinalIgnoreCase))
+            if (message.Equals(StartCommand))
             {
-                // shut down the system (acquire handle to system via
-                // this actors context)
+                DoPrintInstructions();
+            }
+            
+            GetAndValidateInput();
+        }
+
+        #region Internal methods
+        private void DoPrintInstructions()
+        {
+            Console.WriteLine("Please provide the URI of a log file on disk.\n");
+        }
+
+        private void GetAndValidateInput()
+        {
+            var message = Console.ReadLine();
+            if (!string.IsNullOrEmpty(message) && String.Equals(message, ExitCommand, StringComparison.OrdinalIgnoreCase))
+            {
+                // shut down the entire actor system (allows the process to exit)
                 Context.System.Terminate();
                 return;
             }
 
-            // send input to the console writer to process and print
-            // YOU NEED TO FILL IN HERE
+            var validatoractor = Context.ActorSelection("akka://MyActorSystem/user/fileValidatorActor");
 
-            // continue reading messages from the console
-            // YOU NEED TO FILL IN HERE
+            validatoractor.Tell(message);
         }
+
+        #endregion
 
     }
 }
